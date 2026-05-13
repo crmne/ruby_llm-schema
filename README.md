@@ -13,7 +13,7 @@ Structured output is a powerful tool for LLMs to generate consistent and predict
 Some ideal use cases:
 
 - Extracting *metadata, topics, and summary* from articles or blog posts
-- Organizing unstructured feedback or reviews with *sentiment and summary* 
+- Organizing unstructured feedback or reviews with *sentiment and summary*
 - Defining structured *actions* from user messages or emails
 - Extracting *entities and relationships* from documents
 
@@ -24,22 +24,22 @@ class PersonSchema < RubyLLM::Schema
   string :name, description: "Person's full name"
   number :age, description: "Age in years", minimum: 0, maximum: 120
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
     string :country, required: false
   end
-  
+
   array :tags, of: :string, description: "User tags"
-  
+
   array :contacts do
     object do
       string :email, format: "email"
       string :phone, required: false
     end
   end
-  
+
   any_of :status do
     string enum: ["active", "pending", "inactive"]
     null
@@ -101,12 +101,12 @@ class PersonSchema < RubyLLM::Schema
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -121,12 +121,12 @@ PersonSchema = RubyLLM::Schema.create do
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -144,12 +144,12 @@ person_schema = schema "PersonData", description: "A person object" do
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -289,7 +289,7 @@ class MySchema < RubyLLM::Schema
     string :latitude
     string :longitude
   end
-  
+
   # Using a reference in an array
   array :coordinates, of: :location
 
@@ -324,7 +324,7 @@ class CompanySchema < RubyLLM::Schema
   # Using 'of' parameter
   object :ceo, of: PersonSchema
   array :employees, of: PersonSchema
-  
+
   # Using Schema.new in block
   object :founder do
     PersonSchema.new
@@ -402,6 +402,195 @@ schema.to_json_schema
 #    }
 # }
 ```
+
+### Dependencies
+
+> [!NOTE]
+> `dependentRequired` and `dependentSchemas` were introduced in JSON Schema Draft 2019-09. Not all LLM providers or validators support these keywords, check your provider's documentation for compatibility.
+
+Use `requires:` inline or `dependent` block to express that the presence of one property requires other properties. This maps to JSON Schema's [`dependentRequired`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired) and [`dependentSchemas`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentSchemas).
+
+The simplest form uses inline `requires:` on the property declaration:
+
+```ruby
+class PaymentSchema < RubyLLM::Schema
+  string :name
+  number :credit_card, required: false, requires: %i[billing_address cvv]
+  string :billing_address, required: false
+  string :cvv, required: false
+end
+
+# Generates:
+# {
+#   "dependentRequired": {
+#     "credit_card": ["billing_address", "cvv"]
+#   }
+# }
+```
+
+For a single dependency, use a symbol:
+
+```ruby
+number :credit_card, required: false, requires: :billing_address
+```
+
+Use `dependent` block when you need validations. When only `requires` is used, the output uses the simpler `dependentRequired`. When `validates` is also used, it upgrades to `dependentSchemas`:
+
+```ruby
+class PaymentSchema < RubyLLM::Schema
+  string :name
+  number :credit_card, required: false
+  string :billing_address, required: false
+
+  dependent :credit_card do
+    requires :billing_address
+    validates :billing_address, type: :string, min_length: 1
+  end
+end
+
+# Generates:
+# {
+#   "dependentSchemas": {
+#     "credit_card": {
+#       "required": ["billing_address"],
+#       "properties": {
+#         "billing_address": { "type": "string", "minLength": 1 }
+#       }
+#     }
+#   }
+# }
+```
+
+### Conditionals
+
+> [!NOTE]
+> `if`/`then`/`else` was introduced in JSON Schema Draft 7. Not all LLM providers or validators support these keywords, check your provider's documentation for compatibility.
+
+Use `given` to add [JSON Schema `if`/`then`/`else`](https://json-schema.org/understanding-json-schema/reference/conditionals#ifthenelse) rules. The condition values are automatically coerced:
+
+| Ruby value               | JSON Schema                      |
+|--------------------------|----------------------------------|
+| `"string"`               | `{ "const": "string" }`          |
+| `123` / `true` / `false` | `{ "const": 123 }`               |
+| `["a", "b"]`             | `{ "enum": ["a", "b"] }`         |
+| `/pattern/`              | `{ "pattern": "pattern" }`       |
+| `{ minimum: 18 }`        | `{ "minimum": 18 }` (raw schema) |
+
+
+Require a field when a property has a specific value:
+
+```ruby
+class OrderSchema < RubyLLM::Schema
+  string :status, enum: ["pending", "shipped", "cancelled"]
+  string :tracking_number, required: false
+  string :cancellation_reason, required: false
+
+  given status: "shipped" do
+    requires :tracking_number
+  end
+
+  given status: "cancelled" do
+    requires :cancellation_reason
+  end
+end
+```
+
+Multiple property conditions:
+
+```ruby
+class EmployeeSchema < RubyLLM::Schema
+  string :country
+  string :role
+  string :tax_id, required: false
+
+  given country: "US", role: "employee" do
+    requires :tax_id
+  end
+end
+```
+
+Array conditions (enum), regexp conditions (pattern), and hash conditions (raw schema):
+
+* Array → enum
+* Regexp → pattern
+* Hash → raw JSON Schema
+
+```ruby
+class AccountSchema < RubyLLM::Schema
+  string :status
+  string :reason, required: false
+  string :email
+  string :employee_id, required: false
+  integer :age, required: false
+  boolean :parental_consent, required: false
+
+  given status: ["suspended", "banned"] do
+    requires :reason
+  end
+
+  given email: /@acme\.com$/ do
+    requires :employee_id
+  end
+
+  given age: { maximum: 17 } do
+    requires :parental_consent
+  end
+end
+```
+
+Validate property values in the `then` branch:
+
+```ruby
+class EventSchema < RubyLLM::Schema
+  string :format
+  string :date, required: false
+
+  given format: "iso8601" do
+    requires :date
+    validates :date, type: :string, min_length: 10, pattern: "^\\d{4}-\\d{2}-\\d{2}"
+  end
+end
+```
+
+`validates` supports: `type:`, `not_value:`, `min_length:`, `max_length:`, `pattern:` (`String` or `Regexp`), `enum:`, `const:`, `minimum:`, `maximum:`.
+
+Use `otherwise` for an `else` branch:
+
+```ruby
+class ShippingSchema < RubyLLM::Schema
+  boolean :domestic
+  string :state, required: false
+  string :country, required: false
+
+  given domestic: true do
+    requires :state
+
+    otherwise do
+      requires :country
+    end
+  end
+end
+```
+
+Conditions propagate through nested schemas via `of:`:
+
+```ruby
+class AddressSchema < RubyLLM::Schema
+  string :country
+  string :state, required: false
+
+  given country: "US" do
+    requires :state
+  end
+end
+
+class PersonSchema < RubyLLM::Schema
+  string :name
+  array :addresses, of: AddressSchema, required: false
+end
+```
+
+The generated JSON Schema for addresses items will include the if/then rule.
 
 ## JSON Output
 
