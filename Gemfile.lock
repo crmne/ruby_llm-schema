@@ -12,6 +12,7 @@ GEM
     diff-lcs (1.6.2)
     iniparse (1.5.0)
     json (2.12.2)
+    json (2.12.2-java)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -25,6 +26,7 @@ GEM
       racc
     prism (1.4.0)
     racc (1.8.1)
+    racc (1.8.1-java)
     rainbow (3.1.1)
     rake (13.3.0)
     regexp_parser (2.10.0)
@@ -74,6 +76,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-24
+  java
   ruby
 
 DEPENDENCIES
