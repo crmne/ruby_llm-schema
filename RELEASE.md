@@ -1,8 +1,8 @@
 # Release process
 
 1. Bump the version in `lib/ruby_llm/schema/version.rb`
-2. Run `bundle install` to update the gemspec
+2. Run `bundle install`
 3. Commit the changes with a message like "Bump version to X.Y.Z"
-4. Run `bundle exec rake release:prepare` to create a release branch and push it to GitHub
-5. Github Actions will run the tests and publish the gem if they pass
-6. Delete the release branch: `git branch -d release/<version> && git push origin --delete release/<version>`
+4. Run `bundle exec rake release:prepare`
+5. Push to `main`
+6. GitHub Actions will publish the gem if the version is not already on RubyGems

@@ -1,12 +1,19 @@
 # frozen_string_literal: true
 
-require "bundler/gem_tasks"
-require "rspec/core/rake_task"
-require "standard/rake"
+require 'bundler/setup'
+require 'bundler/gem_tasks'
+require 'rake/clean'
+require 'rspec/core/rake_task'
+require 'rubocop/rake_task'
 
 # Load custom tasks
-Dir.glob("lib/tasks/**/*.rake").each { |r| load r }
+Dir.glob('lib/tasks/**/*.rake').each { |r| load r }
 
 RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new(:rubocop)
 
-task default: %i[standard spec]
+desc 'Run specs'
+task test: :spec
+
+desc 'Run RuboCop and specs'
+task default: %i[rubocop spec]

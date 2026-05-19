@@ -45,9 +45,7 @@ module RubyLLM
         return if marks[node] == BLACK
 
         # If node has a temporary mark, we found a cycle
-        if marks[node] == GRAY
-          raise ValidationError, "Circular reference detected involving '#{node}'"
-        end
+        raise ValidationError, "Circular reference detected involving '#{node}'" if marks[node] == GRAY
 
         # Mark node with temporary mark
         marks[node] = GRAY

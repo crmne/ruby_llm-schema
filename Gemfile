@@ -1,8 +1,17 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-# Specify your gem's dependencies in ruby_llm-schema.gemspec
 gemspec
 
-gem "rake", "~> 13.0"
+group :development do
+  gem 'bundler', '>= 2.0'
+  gem 'overcommit', '>= 0.66'
+  gem 'rake', '>= 13.0'
+  gem 'rspec', '~> 3.12'
+  gem 'rubocop', '>= 1.0'
+  gem 'rubocop-performance'
+  gem 'rubocop-rake', '>= 0.6'
+  gem 'rubocop-rspec'
+  gem 'tsort'
+end

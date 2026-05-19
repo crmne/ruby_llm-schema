@@ -8,4 +8,5 @@ require 'ruby_llm/schema'
 # with your gem easier. You can also use a different console, if you like.
 
 require 'irb'
+
 IRB.start(__FILE__)

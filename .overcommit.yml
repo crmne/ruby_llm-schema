@@ -1,0 +1,23 @@
+PreCommit:
+  RuboCop:
+    enabled: true
+    auto_correct: true
+    on_warn: fail
+
+  RSpec:
+    enabled: true
+    command: ['bundle', 'exec', 'rspec']
+    on_warn: fail
+
+  TrailingWhitespace:
+    enabled: true
+    auto_correct: true
+
+  Gitleaks:
+    enabled: true
+    required_executable: 'gitleaks'
+    command: ['bin/gitleaks-staged']
+
+PostCheckout:
+  ALL:
+    quiet: true

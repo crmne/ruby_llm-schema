@@ -1,0 +1,61 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+  Exclude:
+    - vendor/**/*
+    - pkg/**/*
+  SuggestExtensions: false
+
+Metrics/AbcSize:
+  Max: 80
+Metrics/ClassLength:
+  Max: 550
+Metrics/CyclomaticComplexity:
+  Max: 25
+Metrics/ParameterLists:
+  Max: 6
+Metrics/PerceivedComplexity:
+  Max: 12
+Metrics/MethodLength:
+  Max: 80
+  CountAsOne:
+    - array
+    - hash
+    - heredoc
+Metrics/ModuleLength:
+  Max: 550
+Layout/FirstHashElementIndentation:
+  Exclude:
+    - spec/**/*
+Layout/LineLength:
+  Max: 200
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Naming/BlockForwarding:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/BeEq:
+  Enabled: false
+RSpec/DescribeMethod:
+  Enabled: false
+RSpec/DescribedClass:
+  Enabled: false
+RSpec/SpecFilePathFormat:
+  Enabled: false
+Style/ArgumentsForwarding:
+  Enabled: false
+Style/BlockDelimiters:
+  Exclude:
+    - spec/**/*
+Style/Documentation:
+  Enabled: false
+Style/StringLiterals:
+  Enabled: false

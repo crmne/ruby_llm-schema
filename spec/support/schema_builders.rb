@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module SchemaBuilders
-  extend self
+  module_function
 
   def build_schema_class(&block)
     Class.new(RubyLLM::Schema) do

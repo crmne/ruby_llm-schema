@@ -1,21 +1,23 @@
 # RubyLLM::Schema
 
 [![Gem Version](https://badge.fury.io/rb/ruby_llm-schema.svg)](https://rubygems.org/gems/ruby_llm-schema)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/danielfriis/ruby_llm-schema/blob/main/LICENSE.txt)
-[![CI](https://github.com/danielfriis/ruby_llm-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danielfriis/ruby_llm-schema/actions/workflows/ci.yml)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/crmne/ruby_llm-schema/blob/main/LICENSE)
+[![CI](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml)
 
-A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling or structured outputs.
+A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API.
+
+Originally created by [Daniel Friis](https://github.com/danielfriis).
 
 ## Use Cases
 
-Structured output is a powerful tool for LLMs to generate consistent and predictable responses.
+JSON Schema is useful wherever Ruby code needs to describe structured data in a portable format.
 
 Some ideal use cases:
 
-- Extracting *metadata, topics, and summary* from articles or blog posts
-- Organizing unstructured feedback or reviews with *sentiment and summary* 
-- Defining structured *actions* from user messages or emails
-- Extracting *entities and relationships* from documents
+- Defining API request and response shapes
+- Describing configuration files or structured payloads
+- Sharing validation contracts across systems
+- Generating structured output schemas for LLM workflows
 
 ### Simple Example
 
@@ -24,22 +26,22 @@ class PersonSchema < RubyLLM::Schema
   string :name, description: "Person's full name"
   number :age, description: "Age in years", minimum: 0, maximum: 120
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
     string :country, required: false
   end
-  
+
   array :tags, of: :string, description: "User tags"
-  
+
   array :contacts do
     object do
       string :email, format: "email"
       string :phone, required: false
     end
   end
-  
+
   any_of :status do
     string enum: ["active", "pending", "inactive"]
     null
@@ -51,7 +53,7 @@ schema = PersonSchema.new
 puts schema.to_json
 ```
 
-### Most common use case with RubyLLM
+### RubyLLM structured output
 
 ```ruby
 class PersonSchema < RubyLLM::Schema
@@ -101,12 +103,12 @@ class PersonSchema < RubyLLM::Schema
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -121,12 +123,12 @@ PersonSchema = RubyLLM::Schema.create do
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -144,12 +146,12 @@ person_schema = schema "PersonData", description: "A person object" do
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
-  
+
   object :address do
     string :street
     string :city
   end
-  
+
   array :tags, of: :string
 end
 
@@ -269,7 +271,7 @@ Union types are a way to specify that a property can be one of several types.
 ```ruby
 any_of :value do
   string
-  number  
+  number
   null
 end
 
@@ -289,7 +291,7 @@ class MySchema < RubyLLM::Schema
     string :latitude
     string :longitude
   end
-  
+
   # Using a reference in an array
   array :coordinates, of: :location
 
@@ -324,7 +326,7 @@ class CompanySchema < RubyLLM::Schema
   # Using 'of' parameter
   object :ceo, of: PersonSchema
   array :employees, of: PersonSchema
-  
+
   # Using Schema.new in block
   object :founder do
     PersonSchema.new
