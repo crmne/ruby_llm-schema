@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
+require "simplecov"
+require "simplecov-cobertura"
+require_relative "support/simplecov_configuration"
 require "ruby_llm/schema"
 
 Dir[File.join(__dir__, "support/**/*.rb")].each { |file| require file }

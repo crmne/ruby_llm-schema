@@ -8,6 +8,9 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      CODECOV_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -39,4 +42,20 @@ jobs:
         run: bundle exec ruby -e "require 'ruby_llm/schema'"
 
       - name: Run tests
+        if: matrix.ruby-version != '4.0'
         run: bundle exec rspec
+        env:
+          SKIP_COVERAGE: true
+
+      - name: Run tests with coverage
+        if: matrix.ruby-version == '4.0'
+        run: bundle exec rspec
+
+      - name: Upload coverage
+        if: matrix.ruby-version == '4.0'
+        uses: codecov/codecov-action@v6
+        with:
+          files: ./coverage/coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: crmne/ruby_llm-schema
+          fail_ci_if_error: false

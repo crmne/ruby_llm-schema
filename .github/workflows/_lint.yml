@@ -67,3 +67,7 @@ jobs:
       - name: Run RuboCop
         working-directory: ${{ inputs.working-directory }}
         run: bundle exec rubocop
+
+      - name: Run Flay
+        working-directory: ${{ inputs.working-directory }}
+        run: bundle exec rake flay
