@@ -6,6 +6,7 @@ gemspec
 
 group :development do
   gem 'bundler', '>= 2.0'
+  gem 'irb', '>= 1.15'
   gem 'overcommit', '>= 0.66'
   gem 'rake', '>= 13.0'
   gem 'rspec', '~> 3.12'
