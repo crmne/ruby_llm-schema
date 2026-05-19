@@ -18,6 +18,7 @@ Some ideal use cases:
 - Describing configuration files or structured payloads
 - Sharing validation contracts across systems
 - Generating structured output schemas for LLM workflows
+- Defining structured parameters for RubyLLM tools
 
 ### Simple Example
 
@@ -70,6 +71,43 @@ response = chat.with_schema(PersonSchema)
 # The response is automatically parsed from JSON
 puts response.content # => {"name" => "Alice", "age" => 30}
 puts response.content.class # => Hash
+```
+
+### RubyLLM tools
+
+RubyLLM tools can use schema classes for structured parameters. This is useful when the same argument shape is shared across tools or elsewhere in your app.
+
+```ruby
+class SearchParams < RubyLLM::Schema
+  string :query, description: "Search query"
+  integer :limit, required: false, description: "Maximum results"
+end
+
+class SearchDocuments < RubyLLM::Tool
+  desc "Searches internal documents"
+  params SearchParams
+
+  def execute(query:, limit: 10)
+    DocumentSearch.call(query:, limit:)
+  end
+end
+```
+
+For tool-specific parameters, define the schema inline with `params do ... end`.
+
+```ruby
+class Weather < RubyLLM::Tool
+  desc "Gets current weather"
+
+  params do
+    string :city, description: "City name"
+    string :units, enum: %w[celsius fahrenheit], required: false
+  end
+
+  def execute(city:, units: "celsius")
+    WeatherAPI.current(city:, units:)
+  end
+end
 ```
 
 ## Installation
