@@ -6,3 +6,4 @@
 4. Run `bundle exec rake release:prepare`
 5. Push to `main`
 6. GitHub Actions will publish the gem if the version is not already on RubyGems
+7. GitHub Actions will create the `vX.Y.Z` tag and GitHub Release if they do not already exist

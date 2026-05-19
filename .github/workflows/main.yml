@@ -50,7 +50,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     outputs:
-      should_release: ${{ steps.check_version.outputs.version_changed }}
+      should_release: ${{ steps.check_version.outputs.should_release }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -85,16 +85,40 @@ jobs:
 
           if echo "$ALL_PUBLISHED_VERSIONS" | grep -Fxq "$VERSION"; then
             echo "version_changed=false" >> "$GITHUB_OUTPUT"
+            version_changed=false
           else
             echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            version_changed=true
+          fi
+
+          TAG="v${VERSION}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            tag_missing=false
+          else
+            tag_missing=true
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            release_missing=false
+          else
+            release_missing=true
+          fi
+
+          if [ "$version_changed" = "true" ] || [ "$tag_missing" = "true" ] || [ "$release_missing" = "true" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     if: needs.release_needed.outputs.should_release == 'true'
     needs: [release_needed]
     uses: ./.github/workflows/release.yml
     permissions:
-      contents: read
+      contents: write
       packages: write
     secrets: inherit
