@@ -48,6 +48,7 @@ module RubyLLM
 
       def additional_properties(value = nil)
         return @additional_properties ||= false if value.nil?
+
         @additional_properties = value
       end
 

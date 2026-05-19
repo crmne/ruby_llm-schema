@@ -4,7 +4,7 @@ module RubyLLM
   class Schema
     module JsonOutput
       def to_json_schema
-        validate!  # Validate schema before generating JSON
+        validate! # Validate schema before generating JSON
 
         schema_hash = {
           type: "object",
@@ -28,7 +28,7 @@ module RubyLLM
       end
 
       def to_json(*_args)
-        validate!  # Validate schema before generating JSON string
+        validate! # Validate schema before generating JSON string
         JSON.pretty_generate(to_json_schema)
       end
     end

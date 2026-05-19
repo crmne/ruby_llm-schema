@@ -1,0 +1,29 @@
+PreCommit:
+  RuboCop:
+    enabled: true
+    auto_correct: true
+    on_warn: fail
+
+  Flay:
+    enabled: true
+    include:
+      - 'lib/ruby_llm/**/*.rb'
+    mass_threshold: 70
+
+  RSpec:
+    enabled: true
+    command: ['bundle', 'exec', 'rspec']
+    on_warn: fail
+
+  TrailingWhitespace:
+    enabled: true
+    auto_correct: true
+
+  Gitleaks:
+    enabled: true
+    required_executable: 'gitleaks'
+    command: ['bin/gitleaks-staged']
+
+PostCheckout:
+  ALL:
+    quiet: true

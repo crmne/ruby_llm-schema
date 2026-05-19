@@ -1,57 +1,168 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - "release/*"
+  workflow_call:
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
-  test:
-    uses: ./.github/workflows/ci.yml
-
-  release:
-    needs: test
+  publish:
+    name: Build + Publish
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
-      BUNDLE_WITHOUT: development
+      BUNDLE_PATH: vendor/bundle
+      BUNDLE_DISABLE_SHARED_GEMS: "true"
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.2"
+          ruby-version: "4.0"
           bundler-cache: true
 
-      - name: Determine version
-        id: version
+      - name: Check if version needs publishing
+        id: check_version
         run: |
-          VERSION=$(bundle exec ruby -e "require_relative 'lib/ruby_llm/schema/version'; print RubyLlm::Schema::VERSION")
-          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          VERSION=$(ruby -Ilib -rruby_llm/schema/version -e "puts RubyLLM::Schema::VERSION" 2>/dev/null)
 
-      - name: Configure git
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract VERSION from lib/ruby_llm/schema/version.rb" >&2
+            exit 1
+          fi
+          echo "Local version: $VERSION"
+
+          GEM_NAME="ruby_llm-schema"
+          echo "Fetching published versions for '$GEM_NAME'..."
+
+          ALL_PUBLISHED_VERSIONS=$(( \
+            gem list ^${GEM_NAME}$ -r --all 2>/dev/null || true; \
+            gem list ^${GEM_NAME}$ -r --prerelease 2>/dev/null || true; \
+          ) | sed -n 's/.*(\(.*\)).*/\1/p' \
+            | tr ',' '\n' \
+            | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep . \
+            | sort -u )
+
+          echo "Checking against published versions:"
+          if [ -n "$ALL_PUBLISHED_VERSIONS" ]; then
+            echo "$ALL_PUBLISHED_VERSIONS" | sed 's/^/  /'
+          else
+            echo "  (none found)"
+          fi
+
+          if echo "$ALL_PUBLISHED_VERSIONS" | grep -Fxq "$VERSION"; then
+            echo "Verdict: Version $VERSION already published."
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Verdict: Version $VERSION is new."
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - name: Publish to GPR
+        if: steps.check_version.outputs.version_changed == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Create and push tag
-        run: |
-          git tag "v${{ steps.version.outputs.value }}"
-          git push origin "v${{ steps.version.outputs.value }}"
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ steps.version.outputs.value }}"
-          generate_release_notes: true
-
-      - name: Build gem
-        run: gem build ruby_llm-schema.gemspec
+          mkdir -p $HOME/.gem
+          touch $HOME/.gem/credentials
+          chmod 0600 $HOME/.gem/credentials
+          printf -- "---\n:github: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+          gem build *.gemspec
+          output=$(gem push --KEY github --host https://rubygems.pkg.github.com/${OWNER} *.gem 2>&1) || {
+            echo "$output"
+            if echo "$output" | grep -q "already been pushed"; then
+              echo "Version already exists, skipping"
+              exit 0
+            else
+              exit 1
+            fi
+          }
+        env:
+          GEM_HOST_API_KEY: "Bearer ${{ secrets.GITHUB_TOKEN }}"
+          OWNER: ${{ github.repository_owner }}
 
       - name: Publish to RubyGems
+        if: steps.check_version.outputs.version_changed == 'true'
+        run: |
+          mkdir -p $HOME/.gem
+          touch $HOME/.gem/credentials
+          chmod 0600 $HOME/.gem/credentials
+          printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+          gem build *.gemspec
+          output=$(gem push *.gem 2>&1) || {
+            echo "$output"
+            if echo "$output" | grep -q "Repushing of gem versions is not allowed"; then
+              echo "Version already exists, skipping"
+              exit 0
+            else
+              exit 1
+            fi
+          }
         env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: gem push "ruby_llm-schema-${{ steps.version.outputs.value }}.gem"
+          GEM_HOST_API_KEY: "${{ secrets.RUBYGEMS_AUTH_TOKEN }}"
+
+      - name: Create tag and GitHub release
+        run: |
+          set -euo pipefail
+
+          VERSION=$(ruby -Ilib -rruby_llm/schema/version -e "puts RubyLLM::Schema::VERSION" 2>/dev/null)
+          TAG="v${VERSION}"
+
+          git fetch --tags --force
+
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            tag_sha=$(git rev-list -n 1 "${TAG}")
+            if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+              echo "Tag ${TAG} already exists at ${tag_sha}, not ${GITHUB_SHA}." >&2
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "$TAG"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release ${TAG} already exists."
+            exit 0
+          fi
+
+          prerelease_args=()
+          if ruby -rrubygems/version -e 'exit Gem::Version.new(ARGV.fetch(0)).prerelease? ? 0 : 1' "$VERSION"; then
+            prerelease_args=(--prerelease)
+          fi
+
+          previous_tag=$(git tag --sort=-v:refname --list 'v*' | grep -v "^${TAG}$" | head -n 1 || true)
+          if [ -n "$previous_tag" ]; then
+            commit_range="${previous_tag}..${GITHUB_SHA}"
+          else
+            commit_range="$GITHUB_SHA"
+          fi
+
+          commits=$(git log --reverse --format='* %H %s' "$commit_range" | grep -Ev '^\* [0-9a-f]+ (docs|test|chore):' || true)
+          if [ -z "$commits" ]; then
+            commits=$(git log --reverse --format='* %H %s' "$commit_range")
+          fi
+
+          {
+            echo "## Changelog"
+            echo "$commits"
+            if [ -n "$previous_tag" ]; then
+              echo
+              echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${TAG}"
+            fi
+          } > release-notes.md
+
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --notes-file release-notes.md \
+            "${prerelease_args[@]}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

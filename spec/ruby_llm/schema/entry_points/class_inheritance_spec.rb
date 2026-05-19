@@ -73,6 +73,37 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         )
       )
     end
+
+    it "does not duplicate required properties when schema classes are re-evaluated" do
+      stub_const("RedefinedSchema", build_schema_class)
+
+      2.times do
+        RedefinedSchema.class_eval do
+          string :name
+        end
+      end
+
+      expect(RedefinedSchema.required_properties).to eq([:name])
+      expect(RedefinedSchema.new.to_json_schema[:schema][:required]).to eq([:name])
+    end
+
+    it "returns nil from property declarations" do
+      schema_class = build_schema_class
+
+      expect(schema_class.class_eval { string :name }).to be_nil
+      expect(schema_class.class_eval { string :name }).to be_nil
+      expect(schema_class.class_eval { string :name, required: false }).to be_nil
+    end
+
+    it "updates required properties when a property is redefined as optional" do
+      schema_class = build_schema_class
+
+      schema_class.string :name
+      schema_class.string :name, required: false
+
+      expect(schema_class.required_properties).to eq([])
+      expect(schema_class.new.to_json_schema[:schema][:required]).to eq([])
+    end
   end
 
   describe "comprehensive scenario" do

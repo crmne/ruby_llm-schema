@@ -120,21 +120,19 @@ module RubyLLM
 
         def determine_object_reference(of, description = nil)
           result = case of
-          when Symbol
-            reference(of)
-          when Class
-            if schema_class?(of)
-              schema_class_to_inline_schema(of)
-            else
-              raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Class must inherit from RubyLLM::Schema."
-            end
-          else
-            if schema_class?(of)
-              schema_class_to_inline_schema(of)
-            else
-              raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Must be a symbol reference, a Schema class, or a Schema instance."
-            end
-          end
+                   when Symbol
+                     reference(of)
+                   when Class
+                     raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Class must inherit from RubyLLM::Schema." unless schema_class?(of)
+
+                     schema_class_to_inline_schema(of)
+
+                   else
+                     raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Must be a symbol reference, a Schema class, or a Schema instance." unless schema_class?(of)
+
+                     schema_class_to_inline_schema(of)
+
+                   end
 
           description ? result.merge(description: description) : result
         end
@@ -149,7 +147,7 @@ module RubyLLM
           schema_builder.methods.grep(/_schema$/).each do |schema_method|
             type_name = schema_method.to_s.sub(/_schema$/, "")
 
-            context.define_singleton_method(type_name) do |name = nil, **options, &blk|
+            context.define_singleton_method(type_name) do |_name = nil, **options, &blk|
               schemas << schema_builder.send(schema_method, **options, &blk)
             end
           end
@@ -166,10 +164,10 @@ module RubyLLM
         def schema_class_to_inline_schema(schema_class_or_instance)
           # Handle both Schema classes and Schema instances
           schema_class = if schema_class_or_instance.is_a?(Class)
-            schema_class_or_instance
-          else
-            schema_class_or_instance.class
-          end
+                           schema_class_or_instance
+                         else
+                           schema_class_or_instance.class
+                         end
 
           # Directly convert schema class to inline object schema
           {
@@ -180,10 +178,10 @@ module RubyLLM
           }.tap do |schema|
             # For instances, prefer instance description over class description
             description = if schema_class_or_instance.is_a?(Class)
-              schema_class.description
-            else
-              schema_class_or_instance.instance_variable_get(:@description) || schema_class.description
-            end
+                            schema_class.description
+                          else
+                            schema_class_or_instance.instance_variable_get(:@description) || schema_class.description
+                          end
             schema[:description] = description if description
 
             merge_conditions(schema, schema_class)

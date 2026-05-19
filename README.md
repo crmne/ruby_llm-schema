@@ -1,21 +1,24 @@
 # RubyLLM::Schema
 
 [![Gem Version](https://badge.fury.io/rb/ruby_llm-schema.svg)](https://rubygems.org/gems/ruby_llm-schema)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/danielfriis/ruby_llm-schema/blob/main/LICENSE.txt)
-[![CI](https://github.com/danielfriis/ruby_llm-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danielfriis/ruby_llm-schema/actions/workflows/ci.yml)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/crmne/ruby_llm-schema/blob/main/LICENSE)
+[![CI](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml)
 
-A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling or structured outputs.
+A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API.
+
+Originally created by [Daniel Friis](https://github.com/danielfriis).
 
 ## Use Cases
 
-Structured output is a powerful tool for LLMs to generate consistent and predictable responses.
+JSON Schema is useful wherever Ruby code needs to describe structured data in a portable format.
 
 Some ideal use cases:
 
-- Extracting *metadata, topics, and summary* from articles or blog posts
-- Organizing unstructured feedback or reviews with *sentiment and summary*
-- Defining structured *actions* from user messages or emails
-- Extracting *entities and relationships* from documents
+- Defining API request and response shapes
+- Describing configuration files or structured payloads
+- Sharing validation contracts across systems
+- Generating structured output schemas for LLM workflows
+- Defining structured parameters for RubyLLM tools
 
 ### Simple Example
 
@@ -51,7 +54,7 @@ schema = PersonSchema.new
 puts schema.to_json
 ```
 
-### Most common use case with RubyLLM
+### RubyLLM structured output
 
 ```ruby
 class PersonSchema < RubyLLM::Schema
@@ -68,6 +71,43 @@ response = chat.with_schema(PersonSchema)
 # The response is automatically parsed from JSON
 puts response.content # => {"name" => "Alice", "age" => 30}
 puts response.content.class # => Hash
+```
+
+### RubyLLM tools
+
+RubyLLM tools can use schema classes for structured parameters. This is useful when the same argument shape is shared across tools or elsewhere in your app.
+
+```ruby
+class SearchParams < RubyLLM::Schema
+  string :query, description: "Search query"
+  integer :limit, required: false, description: "Maximum results"
+end
+
+class SearchDocuments < RubyLLM::Tool
+  desc "Searches internal documents"
+  params SearchParams
+
+  def execute(query:, limit: 10)
+    DocumentSearch.call(query:, limit:)
+  end
+end
+```
+
+For tool-specific parameters, define the schema inline with `params do ... end`.
+
+```ruby
+class Weather < RubyLLM::Tool
+  desc "Gets current weather"
+
+  params do
+    string :city, description: "City name"
+    string :units, enum: %w[celsius fahrenheit], required: false
+  end
+
+  def execute(city:, units: "celsius")
+    WeatherAPI.current(city:, units:)
+  end
+end
 ```
 
 ## Installation
@@ -269,7 +309,7 @@ Union types are a way to specify that a property can be one of several types.
 ```ruby
 any_of :value do
   string
-  number  
+  number
   null
 end
 

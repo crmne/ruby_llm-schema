@@ -32,14 +32,22 @@ module RubyLLM
         private
 
         def add_property(name, definition, required:, requires: nil)
-          properties[name.to_sym] = definition
-          required_properties << name.to_sym if required
+          property_name = name.to_sym
+
+          properties[property_name] = definition
+          if required
+            required_properties << property_name unless required_properties.include?(property_name)
+          else
+            required_properties.delete(property_name)
+          end
 
           if requires
             builder = ConditionalBuilder.new
             builder.requires(*Array(requires))
             dependencies[name.to_s] = builder
           end
+
+          nil
         end
 
         def primitive_type?(type)

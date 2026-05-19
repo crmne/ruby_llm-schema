@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+unless ENV["SKIP_COVERAGE"]
+  SimpleCov.start do
+    track_files "lib/**/*.rb"
+
+    add_filter "/spec/"
+    add_filter "/vendor/"
+
+    enable_coverage :branch
+
+    formatter SimpleCov::Formatter::MultiFormatter.new(
+      [
+        SimpleCov::Formatter::SimpleFormatter,
+        SimpleCov::Formatter::CoberturaFormatter
+      ].compact
+    )
+  end
+end

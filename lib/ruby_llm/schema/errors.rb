@@ -13,18 +13,10 @@ module RubyLLM
     end
 
     # Raised when an invalid array type is specified
-    class InvalidArrayTypeError < Error
-      def initialize(message)
-        super
-      end
-    end
+    class InvalidArrayTypeError < Error; end
 
     # Raised when an invalid object type is specified
-    class InvalidObjectTypeError < Error
-      def initialize(message)
-        super
-      end
-    end
+    class InvalidObjectTypeError < Error; end
 
     # Raised when schema definition is invalid
     class InvalidSchemaError < Error; end

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 
-bundle exec rake standard
-bundle exec rake spec
+if [ "$#" -eq 0 ]; then
+  exec bundle exec rspec
+else
+  exec bundle exec rspec "$@"
+fi

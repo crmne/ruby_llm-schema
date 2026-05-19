@@ -25,11 +25,11 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
       schema_class.string :status
       schema_class.string :reason, required: false
 
-      schema_class.given status: ["suspended", "banned"] do
+      schema_class.given status: %w[suspended banned] do
         requires :reason
       end
 
-      expect(schema_output[:if][:properties]["status"]).to eq({enum: ["suspended", "banned"]})
+      expect(schema_output[:if][:properties]["status"]).to eq({enum: %w[suspended banned]})
     end
 
     it "coerces regexp to pattern" do
@@ -107,7 +107,7 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
         requires :permissions, :department
       end
 
-      expect(schema_output[:then][:required]).to eq(["permissions", "department"])
+      expect(schema_output[:then][:required]).to eq(%w[permissions department])
     end
 
     it "supports validates with type and string constraints" do
@@ -152,10 +152,10 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
       schema_class.string :state, required: false
 
       schema_class.given country: "US" do
-        validates :state, enum: ["CA", "NY", "TX"]
+        validates :state, enum: %w[CA NY TX]
       end
 
-      expect(schema_output[:then][:properties]["state"]).to eq({enum: ["CA", "NY", "TX"]})
+      expect(schema_output[:then][:properties]["state"]).to eq({enum: %w[CA NY TX]})
     end
 
     it "supports validates with not_value" do
@@ -352,7 +352,7 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
         requires :billing_address, :cvv
       end
 
-      expect(schema_output[:dependentRequired]).to eq({"credit_card" => ["billing_address", "cvv"]})
+      expect(schema_output[:dependentRequired]).to eq({"credit_card" => %w[billing_address cvv]})
     end
 
     it "supports inline requires: with a single field" do
@@ -367,7 +367,7 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
       schema_class.string :billing_address, required: false
       schema_class.string :cvv, required: false
 
-      expect(schema_output[:dependentRequired]).to eq({"credit_card" => ["billing_address", "cvv"]})
+      expect(schema_output[:dependentRequired]).to eq({"credit_card" => %w[billing_address cvv]})
     end
 
     it "supports inline requires: on different property types" do
