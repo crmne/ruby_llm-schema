@@ -12,34 +12,6 @@ module RubyLLM
           @dependencies ||= {}
         end
 
-        def merge_conditions(schema, schema_class)
-          if schema_class.respond_to?(:conditions) && schema_class.conditions.any?
-            if schema_class.conditions.length == 1
-              schema.merge!(schema_class.conditions.first)
-            else
-              schema[:allOf] = schema_class.conditions
-            end
-          end
-
-          if schema_class.respond_to?(:dependencies) && schema_class.dependencies.any?
-            dependent_required = {}
-            dependent_schemas = {}
-
-            schema_class.dependencies.each do |property, builder|
-              if builder.validations_empty?
-                dependent_required[property] = builder.required_fields
-              else
-                dependent_schemas[property] = builder.to_schema
-              end
-            end
-
-            schema[:dependentRequired] = dependent_required if dependent_required.any?
-            schema[:dependentSchemas] = dependent_schemas if dependent_schemas.any?
-          end
-
-          schema
-        end
-
         def dependent(property, &block)
           builder = ConditionalBuilder.new
           builder.instance_eval(&block)
@@ -67,7 +39,34 @@ module RubyLLM
           conditions << condition
         end
 
-        private
+        # @api private
+        def merge_conditions(schema, schema_class)
+          if schema_class.respond_to?(:conditions) && schema_class.conditions.any?
+            if schema_class.conditions.length == 1
+              schema.merge!(schema_class.conditions.first)
+            else
+              schema[:allOf] = schema_class.conditions
+            end
+          end
+
+          if schema_class.respond_to?(:dependencies) && schema_class.dependencies.any?
+            dependent_required = {}
+            dependent_schemas = {}
+
+            schema_class.dependencies.each do |property, builder|
+              if builder.validations_empty?
+                dependent_required[property] = builder.required_fields
+              else
+                dependent_schemas[property] = builder.to_schema
+              end
+            end
+
+            schema[:dependentRequired] = dependent_required if dependent_required.any?
+            schema[:dependentSchemas] = dependent_schemas if dependent_schemas.any?
+          end
+
+          schema
+        end
 
         def coerce_condition(value)
           case value

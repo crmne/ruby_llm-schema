@@ -9,12 +9,16 @@ module RubyLLM
           sub_schema = Class.new(Schema)
           sub_schema.class_eval(&)
 
-          definitions[name] = {
+          schema = {
             type: "object",
             properties: sub_schema.properties,
             required: sub_schema.required_properties,
             additionalProperties: sub_schema.additional_properties
           }
+
+          merge_conditions(schema, sub_schema)
+
+          definitions[name] = schema
         end
 
         def reference(schema_name)
