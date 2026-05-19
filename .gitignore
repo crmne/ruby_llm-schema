@@ -10,3 +10,4 @@
 .DS_Store
 .rspec_status
 *.gem
+Gemfile.lock
