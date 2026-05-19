@@ -1,8 +1,9 @@
 # RubyLLM::Schema
 
 [![Gem Version](https://badge.fury.io/rb/ruby_llm-schema.svg)](https://rubygems.org/gems/ruby_llm-schema)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/crmne/ruby_llm-schema/blob/main/LICENSE)
-[![CI](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/crmne/ruby_llm-schema/actions/workflows/main.yml)
+[![Gem Downloads](https://img.shields.io/gem/dt/ruby_llm-schema)](https://rubygems.org/gems/ruby_llm-schema)
+[![codecov](https://codecov.io/gh/crmne/ruby_llm-schema/branch/main/graph/badge.svg)](https://codecov.io/gh/crmne/ruby_llm-schema)
+[![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop/rubocop)
 
 A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API.
 
