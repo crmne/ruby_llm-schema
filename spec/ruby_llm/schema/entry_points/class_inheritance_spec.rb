@@ -87,6 +87,14 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
       expect(RedefinedSchema.new.to_json_schema[:schema][:required]).to eq([:name])
     end
 
+    it "returns nil from property declarations" do
+      schema_class = build_schema_class
+
+      expect(schema_class.class_eval { string :name }).to be_nil
+      expect(schema_class.class_eval { string :name }).to be_nil
+      expect(schema_class.class_eval { string :name, required: false }).to be_nil
+    end
+
     it "updates required properties when a property is redefined as optional" do
       schema_class = build_schema_class
 

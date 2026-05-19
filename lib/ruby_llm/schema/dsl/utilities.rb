@@ -36,6 +36,8 @@ module RubyLLM
           else
             required_properties.delete(property_name)
           end
+
+          nil
         end
 
         def primitive_type?(type)
