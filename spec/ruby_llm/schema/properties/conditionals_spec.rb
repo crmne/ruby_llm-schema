@@ -173,6 +173,39 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
       expect(schema[:then][:properties]["notes"]).to eq({not: {const: "N/A"}})
     end
 
+    it "preserves falsey constraint values" do
+      schema_class.boolean :enabled
+      schema_class.string :reason, required: false
+
+      schema_class.given enabled: true do
+        validates :reason, const: false
+      end
+
+      expect(schema_output[:then][:properties]["reason"]).to eq({const: false})
+    end
+
+    it "preserves not_value: false" do
+      schema_class.boolean :active
+      schema_class.boolean :verified, required: false
+
+      schema_class.given active: true do
+        validates :verified, not_value: false
+      end
+
+      expect(schema_output[:then][:properties]["verified"]).to eq({not: {const: false}})
+    end
+
+    it "raises on unknown validates option" do
+      schema_class.string :status
+      schema_class.string :code, required: false
+
+      expect {
+        schema_class.given status: "error" do
+          validates :code, unknown_option: true
+        end
+      }.to raise_error(ArgumentError, /unknown validates option: :unknown_option/)
+    end
+
     it "supports validates with regexp pattern" do
       schema_class.string :country
       schema_class.string :zip_code, required: false
@@ -380,6 +413,22 @@ RSpec.describe RubyLLM::Schema, "conditional properties" do
         "email" => ["name"],
         "active" => ["activated_at"]
       })
+    end
+
+    it "supports inline requires: on object properties" do
+      schema_class.object :payment, required: false, requires: :billing_address do
+        string :method
+      end
+      schema_class.string :billing_address, required: false
+
+      expect(schema_output[:dependentRequired]).to eq({"payment" => ["billing_address"]})
+    end
+
+    it "supports inline requires: on array properties" do
+      schema_class.array :items, of: :string, required: false, requires: :item_count
+      schema_class.integer :item_count, required: false
+
+      expect(schema_output[:dependentRequired]).to eq({"items" => ["item_count"]})
     end
 
     it "outputs dependentSchemas when validates are used" do

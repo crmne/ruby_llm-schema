@@ -182,6 +182,7 @@ module RubyLLM
                           else
                             schema_class_or_instance.instance_variable_get(:@description) || schema_class.description
                           end
+
             schema[:description] = description if description
 
             merge_conditions(schema, schema_class)

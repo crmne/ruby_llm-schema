@@ -39,7 +39,8 @@ module RubyLLM
           conditions << condition
         end
 
-        # @api private
+        private
+
         def merge_conditions(schema, schema_class)
           if schema_class.respond_to?(:conditions) && schema_class.conditions.any?
             if schema_class.conditions.length == 1
@@ -102,18 +103,32 @@ module RubyLLM
           required.concat(fields.map(&:to_s))
         end
 
-        def validates(field, type: nil, not_value: nil, min_length: nil, max_length: nil, pattern: nil, enum: nil, const: nil, minimum: nil, maximum: nil)
+        VALIDATES_KEY_MAP = {
+          type: :type,
+          const: :const,
+          enum: :enum,
+          not_value: :not,
+          min_length: :minLength,
+          max_length: :maxLength,
+          pattern: :pattern,
+          minimum: :minimum,
+          maximum: :maximum
+        }.freeze
+
+        def validates(field, **options)
           constraints = {}
 
-          constraints[:type] = type.to_s if type
-          constraints[:const] = const if const
-          constraints[:enum] = enum if enum
-          constraints[:not] = {const: not_value} if not_value
-          constraints[:minLength] = min_length if min_length
-          constraints[:maxLength] = max_length if max_length
-          constraints[:pattern] = pattern.is_a?(Regexp) ? pattern.source : pattern if pattern
-          constraints[:minimum] = minimum if minimum
-          constraints[:maximum] = maximum if maximum
+          options.each do |key, value|
+            schema_key = VALIDATES_KEY_MAP[key]
+            raise ArgumentError, "unknown validates option: #{key.inspect}" unless schema_key
+
+            case key
+            when :type then constraints[:type] = value.to_s
+            when :not_value then constraints[:not] = {const: value}
+            when :pattern then constraints[:pattern] = value.is_a?(Regexp) ? value.source : value
+            else constraints[schema_key] = value
+            end
+          end
 
           validations[field.to_s] = constraints
         end

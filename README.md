@@ -445,10 +445,7 @@ schema.to_json_schema
 
 ### Dependencies
 
-> [!NOTE]
-> `dependentRequired` and `dependentSchemas` were introduced in JSON Schema Draft 2019-09. Not all LLM providers or validators support these keywords, check your provider's documentation for compatibility.
-
-Use `requires:` inline or `dependent` block to express that the presence of one property requires others. Maps to [`dependentRequired`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired) and [`dependentSchemas`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentSchemas).
+Use `requires:` inline or `dependent` block to express that the presence of one property requires others. Maps to [`dependentRequired`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired) (Draft 2019-09) and [`dependentSchemas`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentSchemas) (Draft 2019-09). Check your provider's documentation for compatibility.
 
 ```ruby
 class PaymentSchema < RubyLLM::Schema
@@ -470,10 +467,7 @@ end
 
 ### Conditionals
 
-> [!NOTE]
-> `if`/`then`/`else` was introduced in JSON Schema Draft 7. Not all LLM providers or validators support these keywords — check your provider's documentation for compatibility.
-
-Use `given` to add [JSON Schema `if`/`then`/`else`](https://json-schema.org/understanding-json-schema/reference/conditionals#ifthenelse) rules. Condition values are automatically coerced: strings → `const`, arrays → `enum`, regexps → `pattern`, hashes → raw schema.
+Use `given` to add [JSON Schema `if`/`then`/`else`](https://json-schema.org/understanding-json-schema/reference/conditionals#ifthenelse) (Draft 7) rules. Condition values are automatically coerced: strings → `const`, arrays → `enum`, regexps → `pattern`, hashes → raw schema.
 
 ```ruby
 class OrderSchema < RubyLLM::Schema
