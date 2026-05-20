@@ -112,6 +112,57 @@ RSpec.describe RubyLLM::Schema, "definitions and references" do
     expect(properties[:headquarters]).to eq({"$ref" => "#/$defs/address"})
   end
 
+  it "includes given conditions in $defs" do
+    schema_class.define :address do
+      string :country
+      string :state, required: false
+
+      given country: "US" do
+        requires :state
+      end
+    end
+
+    schema_class.object :address, of: :address
+
+    defs = schema_class.new.to_json_schema[:schema]["$defs"][:address]
+
+    expect(defs[:if]).to eq({
+      properties: {"country" => {const: "US"}},
+      required: ["country"]
+    })
+    expect(defs[:then]).to eq({required: ["state"]})
+  end
+
+  it "includes dependent in $defs" do
+    schema_class.define :payment do
+      number :credit_card, required: false
+      string :billing_address, required: false
+
+      dependent :credit_card do
+        requires :billing_address
+      end
+    end
+
+    schema_class.object :payment, of: :payment
+
+    defs = schema_class.new.to_json_schema[:schema]["$defs"][:payment]
+
+    expect(defs[:dependentRequired]).to eq({"credit_card" => ["billing_address"]})
+  end
+
+  it "includes inline requires: in $defs" do
+    schema_class.define :payment do
+      number :credit_card, required: false, requires: :billing_address
+      string :billing_address, required: false
+    end
+
+    schema_class.object :payment, of: :payment
+
+    defs = schema_class.new.to_json_schema[:schema]["$defs"][:payment]
+
+    expect(defs[:dependentRequired]).to eq({"credit_card" => ["billing_address"]})
+  end
+
   it "shows deprecation warning if using reference option" do
     schema_class.define :address do
       string :street

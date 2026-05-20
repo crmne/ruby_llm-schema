@@ -4,20 +4,20 @@ module RubyLLM
   class Schema
     module DSL
       module ComplexTypes
-        def object(name, description: nil, required: true, **options, &block)
-          add_property(name, object_schema(description: description, **options, &block), required: required)
+        def object(name, description: nil, required: true, requires: nil, **options, &block)
+          add_property(name, object_schema(description: description, **options, &block), required: required, requires: requires)
         end
 
-        def array(name, description: nil, required: true, **options, &block)
-          add_property(name, array_schema(description: description, **options, &block), required: required)
+        def array(name, description: nil, required: true, requires: nil, **options, &block)
+          add_property(name, array_schema(description: description, **options, &block), required: required, requires: requires)
         end
 
-        def any_of(name, description: nil, required: true, **options, &block)
-          add_property(name, any_of_schema(description: description, **options, &block), required: required)
+        def any_of(name, description: nil, required: true, requires: nil, **options, &block)
+          add_property(name, any_of_schema(description: description, **options, &block), required: required, requires: requires)
         end
 
-        def one_of(name, description: nil, required: true, **options, &block)
-          add_property(name, one_of_schema(description: description, **options, &block), required: required)
+        def one_of(name, description: nil, required: true, requires: nil, **options, &block)
+          add_property(name, one_of_schema(description: description, **options, &block), required: required, requires: requires)
         end
 
         def optional(name, description: nil, &block)

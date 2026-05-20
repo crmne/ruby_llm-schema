@@ -18,6 +18,8 @@ module RubyLLM
         # Only include $defs if there are definitions
         schema_hash["$defs"] = self.class.definitions unless self.class.definitions.empty?
 
+        self.class.send(:merge_conditions, schema_hash, self.class)
+
         {
           name: @name,
           description: @description || self.class.description,

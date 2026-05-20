@@ -64,13 +64,15 @@ module RubyLLM
               schema_class_to_inline_schema(result).merge(description ? {description: description} : {})
             # Block didn't return reference or schema, so we build an inline object schema
             else
-              {
+              schema = {
                 type: "object",
                 properties: sub_schema.properties,
                 required: sub_schema.required_properties,
                 additionalProperties: sub_schema.additional_properties,
                 description: description
               }.compact
+
+              merge_conditions(schema, sub_schema)
             end
           end
         end
@@ -180,7 +182,10 @@ module RubyLLM
                           else
                             schema_class_or_instance.instance_variable_get(:@description) || schema_class.description
                           end
+
             schema[:description] = description if description
+
+            merge_conditions(schema, schema_class)
           end
         end
       end

@@ -444,6 +444,65 @@ schema.to_json_schema
 # }
 ```
 
+### Dependencies
+
+Use `requires:` inline or `dependent` block to express that the presence of one property requires others. Maps to [`dependentRequired`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired) (Draft 2019-09) and [`dependentSchemas`](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentSchemas) (Draft 2019-09). Check your provider's documentation for compatibility.
+
+```ruby
+class PaymentSchema < RubyLLM::Schema
+  string :name
+  number :credit_card, required: false, requires: %i[billing_address cvv]
+  string :billing_address, required: false
+  string :cvv, required: false
+end
+```
+
+Use a `dependent` block when you also need validations — this upgrades the output to `dependentSchemas`:
+
+```ruby
+dependent :credit_card do
+  requires :billing_address
+  validates :billing_address, type: :string, min_length: 1
+end
+```
+
+### Conditionals
+
+Use `given` to add [JSON Schema `if`/`then`/`else`](https://json-schema.org/understanding-json-schema/reference/conditionals#ifthenelse) (Draft 7) rules. Condition values are automatically coerced: strings → `const`, arrays → `enum`, regexps → `pattern`, hashes → raw schema.
+
+```ruby
+class OrderSchema < RubyLLM::Schema
+  string :status, enum: ["pending", "shipped", "cancelled"]
+  string :tracking_number, required: false
+  string :cancellation_reason, required: false
+
+  given status: "shipped" do
+    requires :tracking_number
+  end
+
+  given status: "cancelled" do
+    requires :cancellation_reason
+    validates :cancellation_reason, type: :string, min_length: 1
+  end
+end
+```
+
+`validates` supports: `type:`, `not_value:`, `min_length:`, `max_length:`, `pattern:` (string or regexp), `enum:`, `const:`, `minimum:`, `maximum:`.
+
+Use `otherwise` for an `else` branch:
+
+```ruby
+given domestic: true do
+  requires :state
+
+  otherwise do
+    requires :country
+  end
+end
+```
+
+Conditions propagate through nested schemas via `of:`.
+
 ## JSON Output
 
 ```ruby
