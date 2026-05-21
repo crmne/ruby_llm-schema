@@ -5,8 +5,8 @@ require_relative 'lib/ruby_llm/schema/version'
 Gem::Specification.new do |spec|
   spec.name          = 'ruby_llm-schema'
   spec.version       = RubyLLM::Schema::VERSION
-  spec.authors       = ['Daniel Friis']
-  spec.email         = ['d@friis.me']
+  spec.authors       = ['Daniel Friis', 'Carmine Paolino']
+  spec.email         = ['d@friis.me', 'carmine@paolino.me']
 
   spec.summary       = 'A simple Ruby DSL for creating JSON schemas.'
   spec.description   = 'A compact Ruby DSL for building standards-oriented JSON Schema documents from Ruby.'
