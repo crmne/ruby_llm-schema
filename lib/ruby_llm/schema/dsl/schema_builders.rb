@@ -16,23 +16,25 @@ module RubyLLM
           }.compact
         end
 
-        def number_schema(description: nil, minimum: nil, maximum: nil, multiple_of: nil)
+        def number_schema(description: nil, minimum: nil, maximum: nil, multiple_of: nil, enum: nil)
           {
             type: "number",
             description: description,
             minimum: minimum,
             maximum: maximum,
-            multipleOf: multiple_of
+            multipleOf: multiple_of,
+            enum: enum
           }.compact
         end
 
-        def integer_schema(description: nil, minimum: nil, maximum: nil, multiple_of: nil)
+        def integer_schema(description: nil, minimum: nil, maximum: nil, multiple_of: nil, enum: nil)
           {
             type: "integer",
             description: description,
             minimum: minimum,
             maximum: maximum,
-            multipleOf: multiple_of
+            multipleOf: multiple_of,
+            enum: enum
           }.compact
         end
 
